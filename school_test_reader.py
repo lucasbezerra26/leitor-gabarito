@@ -1,3 +1,5 @@
+from logging import warn
+
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,15 +20,15 @@ class CustomError(Exception):
         return self.message
 
 
-def plotfolha(img):
+def plot_edge(img):
     plt.figure(figsize=(10, 20))
     plt.imshow(img, cmap="gray")
 
 
-def funcaoPlot(imagens, title=None):
-    fig, ax = plt.subplots(1, len(imagens), figsize=(30, 30))
-    for i, folha in enumerate(imagens):
-        ax[i].imshow(folha, cmap="gray")
+def make_plot(images, title=None):
+    fig, ax = plt.subplots(1, len(images), figsize=(30, 30))
+    for i, edge in enumerate(images):
+        ax[i].imshow(edge, cmap="gray")
         if title:
             ax[i].set_title(title[i])
         else:
@@ -34,15 +36,12 @@ def funcaoPlot(imagens, title=None):
 
 
 def remove_small_objects_my(ar, min_size=64, connectivity=1, in_place=False):
-    # Raising type error if not int or bool
-    # _check_dtype_supported(ar)
-
     if in_place:
         out = ar
     else:
         out = ar.copy()
 
-    if min_size == 0:  # shortcut for efficiency
+    if min_size == 0:
         return out
 
     if out.dtype == bool:
@@ -63,12 +62,11 @@ def remove_small_objects_my(ar, min_size=64, connectivity=1, in_place=False):
         warn("Only one label was provided to `remove_small_objects`. "
              "Did you mean to use a boolean array?")
 
-    # minha alteração
     mat = component_sizes
     mat[0] = 1
     min_size = max(mat) - 1
 
-    too_small = (component_sizes) < min_size
+    too_small = component_sizes < min_size
     too_small_mask = too_small[ccs]
     out[too_small_mask] = 0
 
@@ -86,7 +84,7 @@ def remove_small_objects_my2(ar):
     index = sorted(component_sizes, reverse=True)
     size = len(index)
     index = index[size // 2]
-    too_small = (component_sizes) < index
+    too_small = component_sizes < index
     too_small_mask = too_small[ccs]
     out[too_small_mask] = 0
     return out
@@ -98,7 +96,7 @@ def return_rectangle(ar):
     ndi.label(ar, selem, output=ccs)
     component_sizes = np.bincount(ccs.ravel())
 
-    too_small = (component_sizes) < 0
+    too_small = component_sizes < 0
     out_final = list()
     for i in range(len(too_small) - 1):
         index = i + 1
@@ -160,7 +158,7 @@ def marked(rectangles_slices, img, img_original, img_otsu):
             lyric_final = img[lyric]
             aux = False
             if index == 24:
-                plotfolha(lyric_final)
+                plot_edge(lyric_final)
                 print(marked_dict[index + 1], index + 1)
                 print(percentage(lyric_final, verbose=True))
             marked_dict[index + 1][letras[index_interno + 1]] = percentage(lyric_final, verbose=False)
@@ -171,7 +169,7 @@ def marked(rectangles_slices, img, img_original, img_otsu):
 def return_lyrics_of_dict(dicio):
     result = None
     for key, value in zip(dicio.keys(), dicio.values()):
-        if value == True:
+        if value is True:
             if result:
                 return None
             result = key
@@ -243,9 +241,9 @@ def processing(img_original, img_removed_shadow=None, verbose=False, flag=False)
         title = "Com erro:"
 
     if verbose:
-        funcaoPlot([img_original, img, img_otsu, inverted_img, maior_objeto, maior_objeto_fill, new_segmentacao],
-                   title=[f'{title} original', 'Sem sombra', 'otsu', 'cores invertida', 'Maior objeto na img',
-                          'Regiao do maior obj', 'Segmentacao'])
+        make_plot([img_original, img, img_otsu, inverted_img, maior_objeto, maior_objeto_fill, new_segmentacao],
+                  title=[f'{title} original', 'Sem sombra', 'otsu', 'cores invertida', 'Maior objeto na img',
+                         'Regiao do maior obj', 'Segmentacao'])
         if title == 'Sem erro:':
             for x in marked_dict:
                 print(f'{x}: {marked_dict[x]}')
