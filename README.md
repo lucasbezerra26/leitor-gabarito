@@ -7,7 +7,7 @@ pip install -r requirements.txt
 ```
 
 ```
-from leitor_gabarito import read_img
+from school_test_reader import read_img
 ```
 
 ```
